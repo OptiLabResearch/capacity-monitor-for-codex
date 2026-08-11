@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Welcome · Capacity Monitor for Codex</title>
+  <link rel="stylesheet" href="onboarding.css">
+</head>
+<body>
+<main class="card">
+  <h1>Capacity Monitor for Codex</h1>
+  <p class="lead">Before the extension requests your Codex quota, review what it accesses and what stays local.</p>
+  <h2>What it accesses</h2>
+  <ul>
+    <li>Your authenticated ChatGPT session, only to request Codex quota/rate-limit metadata.</li>
+    <li>Quota percentage, reset timing, window metadata, plan label, and reset-credit metadata when available.</li>
+  </ul>
+  <p>A short-lived ChatGPT access token is used in memory for the quota request and is not stored. If a direct request fails, the extension can make the same request inside an open ChatGPT tab; it does not read the page DOM.</p>
+  <h2>What it does not intentionally read</h2>
+  <ul>
+    <li>ChatGPT prompts or conversation text.</li>
+    <li>Passwords or unrelated browsing history.</li>
+  </ul>
+  <h2>Local data</h2>
+  <p>Normalized quota snapshots, inferred sessions, alerts, diagnostics, and settings are stored in Chrome local extension storage in this browser profile.</p>
+  <h2>Optional external alerts</h2>
+  <p>Email, Telegram, Discord, and generic webhooks are off by default. Enabling one requests HTTPS access to its exact origin and sends only alert data needed for that channel. Integration credentials are stored locally and are not independently encrypted by this project.</p>
+  <div class="notice">This is an independent project and is not affiliated with or endorsed by OpenAI. Quota reporting uses an internal, undocumented ChatGPT endpoint and may stop working if OpenAI changes it.</div>
+  <label class="agree"><input id="agree" type="checkbox"> <span>I understand and want the extension to access my Codex quota metadata for monitoring and alerts.</span></label>
+  <button id="continue" disabled>Allow quota monitoring</button>
+  <a href="privacy.html">Read the full privacy policy</a>
+</main>
+<script type="module" src="onboarding.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Capacity Monitor for Codex",
+  "version": "0.6.0",
+  "description": "Monitor Codex capacity, observed usage history, reset timing and opt-in alerts. Local-first and independent.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "scripting"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Codex Capacity",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "overlay.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "dashboard.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "short_name": "Codex Capacity"
+}

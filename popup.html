@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Codex Capacity</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Codex Capacity</h1>
+      <div id="plan" class="muted">Loading…</div>
+    </div>
+    <button id="refresh" class="icon-btn" title="Refresh quota" aria-label="Refresh quota"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.7-2.6L20 9M4 15l2.2 2.6A7 7 0 0 0 17.9 15"/></svg></button>
+  </header>
+
+  <div id="limitCard"></div>
+
+  <section id="paceCard" class="card">
+    <div class="section-head">
+      <strong id="paceTitle">Observed pacing</strong>
+      <span id="paceStatus" class="pill">—</span>
+    </div>
+    <div class="pace-track">
+      <div id="timeMarker" class="marker time"></div>
+      <div id="usageMarker" class="marker usage"></div>
+    </div>
+    <div class="legend muted"><span>0%</span><span>quota/time progress</span><span>100%</span></div>
+    <div class="metrics four">
+      <div><span>Burn</span><strong id="burn">—</strong></div>
+      <div><span>Safe budget</span><strong id="safe">—</strong></div>
+      <div><span>Expected empty</span><strong id="emptyAt">—</strong></div>
+      <div><span>At reset</span><strong id="atReset">—</strong></div>
+    </div>
+    <div id="paceNote" class="muted note"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <strong>Current-cycle history</strong>
+      <span id="historyMeta" class="muted">—</span>
+    </div>
+    <canvas id="chart" role="img" aria-label="Observed remaining quota over the current cycle"></canvas>
+    <div id="chartEmpty" class="empty muted"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <strong>7-day activity heatmap</strong>
+      <span class="muted">observed quota burned / hour</span>
+    </div>
+    <div id="heatmap" class="heatmap" role="img" aria-label="Observed quota usage by hour over the last seven days"></div>
+    <div id="heatEmpty" class="empty muted"></div>
+  </section>
+
+  <section class="card mini-grid">
+    <div><span class="muted">Sessions</span><strong id="sessionCount">—</strong></div>
+    <div><span class="muted">Peak session</span><strong id="peakSession">—</strong></div>
+    <div><span class="muted">Reset credits</span><strong id="credits">—</strong></div>
+  </section>
+
+  <section class="card alerts-card">
+    <div class="section-head"><strong>Alerts</strong><span id="alertsSummary" class="muted">—</span></div>
+    <label>Thresholds (% remaining)
+      <input id="thresholds" type="text" placeholder="25, 10, 0">
+    </label>
+    <div class="check-grid">
+      <label><input id="resetAlert" type="checkbox"> Capacity back</label>
+      <label><input id="predictiveAlert" type="checkbox"> Projected run-out</label>
+      <label><input id="burnAlert" type="checkbox"> High burn</label>
+      <label><input id="unusedAlert" type="checkbox"> Unused capacity</label>
+    </div>
+    <div class="button-row">
+      <button id="saveAlerts" class="secondary">Save alerts</button>
+      <span id="saveStatus" class="muted"></span>
+    </div>
+  </section>
+
+  <details class="card integrations-card">
+    <summary><strong>Integrations</strong><span id="integrationSummary" class="muted">Optional</span></summary>
+
+    <div class="integration-block">
+      <label><input id="emailEnabled" type="checkbox"> Email via Brevo relay</label>
+      <label>Email relay URL<input id="emailRelayUrl" type="url" placeholder="https://your-worker.example/email"></label>
+      <label>Relay secret<input id="emailRelaySecret" type="password" placeholder="EXTENSION_SECRET"></label><div class="setup-note"><strong>Email:</strong> create your own Brevo sender + Cloudflare Worker relay, paste the Worker <code>/email</code> URL and the separate <code>EXTENSION_SECRET</code>. Never paste your Brevo API key here.</div>
+      <button id="testEmail" class="secondary">Test email</button>
+    </div>
+
+    <div class="integration-block">
+      <label><input id="discordEnabled" type="checkbox"> Discord webhook</label>
+      <label>Webhook URL<input id="discordWebhook" type="password" placeholder="https://discord.com/api/webhooks/…"></label><div class="setup-note"><strong>Discord:</strong> Server Settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.</div>
+      <button id="testDiscord" class="secondary">Test Discord</button>
+    </div>
+
+    <div class="integration-block">
+      <label><input id="telegramEnabled" type="checkbox"> Telegram bot</label>
+      <label>Bot token<input id="telegramToken" type="password" placeholder="123456:ABC…"></label>
+      <label>Chat ID<input id="telegramChat" type="text" placeholder="123456789"></label><div class="setup-note"><strong>Telegram:</strong> create a bot with <code>@BotFather</code>, start the bot once, then use <code>@userinfobot</code> to get your numeric user/chat ID.</div>
+      <button id="testTelegram" class="secondary">Test Telegram</button>
+    </div>
+
+    <div class="muted note">The Brevo API key stays in Cloudflare. This extension stores only the relay URL and your EXTENSION_SECRET locally.</div>
+  </details>
+
+  <div id="status" class="status muted" role="status" aria-live="polite"></div>
+  <div class="actions">
+    <button id="dashboard" class="primary action-btn">Open dashboard</button>
+    <a class="secondary action-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer">Open OpenAI usage</a>
+    <button id="about" class="secondary action-btn">About & privacy</button>
+  </div>
+</main>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+const agree=document.getElementById('agree'),btn=document.getElementById('continue');agree.onchange=()=>btn.disabled=!agree.checked;btn.onclick=async()=>{btn.disabled=true;const r=await chrome.runtime.sendMessage({type:'acknowledgePrivacy'});if(r?.ok){location.href='dashboard.html#overview'}else{btn.disabled=false;alert(r?.error||'Could not save consent')}};

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Privacy · Capacity Monitor for Codex</title>
+  <link rel="stylesheet" href="onboarding.css">
+</head>
+<body>
+<main class="card">
+  <h1>Privacy policy</h1>
+  <p><strong>Capacity Monitor for Codex</strong> is independent, local-first, and not affiliated with or endorsed by OpenAI.</p>
+  <h2>Access and purpose</h2>
+  <p>After consent, the extension accesses the authenticated ChatGPT session only to request Codex quota/rate-limit metadata from an internal, undocumented endpoint. It uses that data for capacity display, observed history/pacing, and alerts. It does not intentionally read prompts or conversation text. The short-lived access token is not stored.</p>
+  <h2>Local storage and deletion</h2>
+  <p>Normalized snapshots (up to 180 days/12,000 points), reset events, inferred sessions, alert history, diagnostics, consent, and settings are stored in <code>chrome.storage.local</code>. Use Dashboard → Data &amp; privacy to delete history or all local extension data.</p>
+  <h2>Optional transmissions</h2>
+  <p>Core quota requests go to OpenAI/ChatGPT. Browser alerts stay local. Email relay/Brevo, Telegram, Discord, and generic webhook delivery are off by default. When enabled, minimal alert metadata goes only to the provider/endpoint the user configured. No developer analytics, ads, or telemetry are included.</p>
+  <h2>Credentials</h2>
+  <p>Integration credentials are stored in the Chrome profile and are not independently encrypted by this project. Backups and diagnostics exclude sensitive integration fields. The Brevo API key belongs only in Worker secret storage—never in the extension.</p>
+  <h2>Reliability</h2>
+  <p>OpenAI may change or remove the internal endpoint without notice. Unknown data fails closed; the extension does not invent quota history or projections.</p>
+  <p>For complete retention, sharing, security, and limited-use details, see <code>PRIVACY.md</code> in the public repository.</p>
+  <p><a href="dashboard.html#about">Back to dashboard</a></p>
+</main>
+</body>
+</html>

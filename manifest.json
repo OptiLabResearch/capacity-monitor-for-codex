@@ -3,6 +3,7 @@
   "name": "Capacity Monitor for Codex",
   "version": "0.6.0",
   "description": "Monitor Codex capacity, observed usage history, reset timing and opt-in alerts. Local-first and independent.",
+  "homepage_url": "https://github.com/OptiLabResearch/capacity-monitor-for-codex",
   "permissions": [
     "storage",
     "alarms",

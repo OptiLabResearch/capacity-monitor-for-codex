@@ -6,7 +6,7 @@ Security fixes target the latest public beta. This project depends on an undocum
 
 ## Reporting
 
-Use a private GitHub Security Advisory after the repository is published. Do not post access tokens, cookies, raw authenticated responses, relay URLs, email addresses, Telegram bot tokens/Chat IDs, Discord webhooks, generic webhook URLs, API keys, or `.env` contents in a public issue.
+Use a [private GitHub Security Advisory](https://github.com/OptiLabResearch/capacity-monitor-for-codex/security/advisories/new). Do not post access tokens, cookies, raw authenticated responses, relay URLs, email addresses, Telegram bot tokens/Chat IDs, Discord webhooks, generic webhook URLs, API keys, or `.env` contents in a public issue.
 
 If a real credential was committed, revoke or rotate it immediately even if Git history is later rewritten.
 

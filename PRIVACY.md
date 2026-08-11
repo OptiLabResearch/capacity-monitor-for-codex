@@ -45,4 +45,4 @@ Data accessed by the extension is used only to provide and secure its disclosed 
 
 ## Contact
 
-The public repository's Security Advisory and Issues links will be the security and privacy contact points after repository publication.
+Privacy questions can be filed in [GitHub Issues](https://github.com/OptiLabResearch/capacity-monitor-for-codex/issues) without including private data. Report security-sensitive matters through a [private GitHub Security Advisory](https://github.com/OptiLabResearch/capacity-monitor-for-codex/security/advisories/new).

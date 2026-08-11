@@ -37,11 +37,14 @@ Install-time consent and the in-product first-run disclosure must remain consist
 - `https://chatgpt.com/*`: required quota source and on-page capacity meter.
 - Optional `https://*/*`: exact runtime origins are requested only for user-configured HTTPS relays/webhooks whose domains cannot be known at build time.
 
-## Publication fields still required
+## Publication URLs
 
-- Support URL: public GitHub Issues URL.
-- Homepage URL: public repository URL.
-- Privacy policy URL: stable HTTPS rendering of `PRIVACY.md`.
+- Support URL: `https://github.com/OptiLabResearch/capacity-monitor-for-codex/issues`
+- Homepage URL: `https://github.com/OptiLabResearch/capacity-monitor-for-codex`
+- Privacy policy URL: `https://github.com/OptiLabResearch/capacity-monitor-for-codex/blob/main/PRIVACY.md`
+
+## Still required
+
 - Store screenshots: sanitized light and dark popup/dashboard captures.
 
 Complete the Developer Dashboard privacy-practices disclosure and limited-use certification to match this document exactly.

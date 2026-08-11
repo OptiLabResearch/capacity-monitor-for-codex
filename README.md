@@ -6,6 +6,8 @@ This is not an official OpenAI product and is not affiliated with or endorsed by
 
 > Public beta: `0.6.0-beta.0`. The quota source is an undocumented ChatGPT web endpoint. OpenAI may change or remove it without notice.
 
+[Report an issue](https://github.com/OptiLabResearch/capacity-monitor-for-codex/issues) · [Privacy policy](https://github.com/OptiLabResearch/capacity-monitor-for-codex/blob/main/PRIVACY.md) · [Security reporting](https://github.com/OptiLabResearch/capacity-monitor-for-codex/security/advisories/new)
+
 ## Features
 
 - Current Codex quota remaining/used, reset time, countdown, plan label, toolbar badge, and manual refresh.

@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest a feature related to Codex capacity monitoring
+body:
+  - type: textarea
+    attributes:
+      label: Problem / use case
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed solution

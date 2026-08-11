@@ -1,0 +1,21 @@
+[
+  "manifest.json",
+  "background.js",
+  "core.js",
+  "popup.html",
+  "popup.js",
+  "popup.css",
+  "dashboard.html",
+  "dashboard.js",
+  "dashboard.css",
+  "help.js",
+  "overlay.js",
+  "onboarding.html",
+  "onboarding.js",
+  "onboarding.css",
+  "privacy.html",
+  "icons/icon16.png",
+  "icons/icon32.png",
+  "icons/icon48.png",
+  "icons/icon128.png"
+]

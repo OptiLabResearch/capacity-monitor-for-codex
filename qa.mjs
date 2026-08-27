@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { htmlJavaScriptPairs, publicHtmlFiles, safeSinkJavaScriptFiles } from './scripts/file-manifest.mjs';
 
 const root = process.cwd();
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -22,7 +23,9 @@ const requiredDocs = ['README.md','LICENSE','PRIVACY.md','SECURITY.md','CONTRIBU
 for (const file of [...releaseFiles, ...requiredDocs, 'package.json', 'worker-example.js']) ok(fs.existsSync(path.join(root, file)), `missing ${file}`);
 
 const packageJson = JSON.parse(read('package.json'));
-ok(packageJson.version.startsWith(`${manifest.version}-beta`), 'package and manifest versions disagree');
+ok(packageJson.version === manifest.version || packageJson.version.startsWith(manifest.version + "-"), "package and manifest versions disagree");
+ok(read("scripts/package.mjs").includes("packageJson.version"), "package filename must use the package version");
+ok(read("scripts/package.mjs").includes("path.join(root, 'release', packageJson.version)"), "package artifacts must be version-scoped");
 ok(Object.keys(packageJson).every(key => !['dependencies','devDependencies','optionalDependencies'].includes(key)), 'runtime/build dependencies are not expected');
 
 for (const [file, size] of [['icons/icon16.png',16],['icons/icon32.png',32],['icons/icon48.png',48],['icons/icon128.png',128]]) {
@@ -32,19 +35,19 @@ for (const [file, size] of [['icons/icon16.png',16],['icons/icon32.png',32],['ic
   ok([4,6].includes(png[25]), `${file} does not declare an alpha channel`);
 }
 
-for (const htmlFile of ['popup.html','dashboard.html','onboarding.html','privacy.html']) {
+for (const htmlFile of publicHtmlFiles) {
   const html = read(htmlFile);
   ok(!/<script[^>]+src=["']https?:/i.test(html), `${htmlFile} loads remote executable code`);
   ok(!/<script(?![^>]+src=)[^>]*>/i.test(html), `${htmlFile} contains inline script`);
   ok(!/\son\w+\s*=/i.test(html), `${htmlFile} contains inline event handlers`);
 }
 
-for (const jsFile of ['background.js','core.js','popup.js','dashboard.js','help.js','overlay.js','onboarding.js']) {
+for (const jsFile of safeSinkJavaScriptFiles) {
   const js = read(jsFile);
   ok(!/\.(?:innerHTML|outerHTML)\s*=|insertAdjacentHTML|\beval\s*\(|new\s+Function\b/.test(js), `${jsFile} contains an unsafe HTML/code execution sink`);
 }
 
-for (const [htmlFile, jsFile] of [['popup.html','popup.js'],['dashboard.html','dashboard.js']]) {
+for (const [htmlFile, jsFile] of htmlJavaScriptPairs) {
   const ids = new Set([...read(htmlFile).matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]));
   const refs = new Set([...read(jsFile).matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(match => match[1]));
   for (const id of refs) ok(ids.has(id), `${jsFile} references missing #${id}`);
@@ -61,6 +64,7 @@ for (const [pattern, label] of [
   [/https:\/\/api\.telegram\.org\/bot\d+:[A-Za-z0-9_-]+/, 'Telegram bot URL'],
   [/alerts-api\.optiqo\.dev/i, 'private relay URL']
 ]) ok(!pattern.test(publicText), `possible ${label} leaked`);
+ok(read('.gitignore').split(/\r?\n/).includes('.agent-metrics/'), 'external agent metrics must be ignored');
 
 ok(read('.gitignore').split(/\r?\n/).includes('.env'), '.env must be ignored');
 ok(read('background.js').includes('emailRelayUrl: ""'), 'public build must not default to a relay');
@@ -80,7 +84,7 @@ console.log(`Static public-release QA passed (${releaseFiles.length} packaged fi
 function walk(directory) {
   const files = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    if (['node_modules','release','.git'].includes(entry.name)) continue;
+    if (['node_modules','release','.git','.agent-metrics'].includes(entry.name)) continue;
     const target = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...walk(target));
     else files.push(target);

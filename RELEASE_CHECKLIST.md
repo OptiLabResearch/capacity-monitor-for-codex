@@ -2,10 +2,8 @@
 
 ## Automated
 
-- [ ] `npm run check`
-- [ ] `npm test`
-- [ ] `npm run package` twice with identical SHA-256
-- [ ] ZIP entries exactly match `release-files.json`
+- [ ] `npm run verify:release` (syntax, tests, QA, packaging twice, identical SHA-256)
+- [ ] ZIP entries in `release/<package-version>/` exactly match `release-files.json` (checked by the release gate)
 - [ ] `.env` ignored and untracked
 - [ ] Working tree, staged diff, Git history, and ZIP scanned for credentials
 - [ ] GitHub Actions uses read-only contents permission
@@ -15,6 +13,7 @@
 - [ ] Exact ZIP installs in a clean stable-Chrome profile
 - [ ] First-run consent blocks quota access until accepted
 - [ ] Signed-in direct/fallback refresh and signed-out recovery tested
+- [ ] When both windows are available, popup, dashboard, ChatGPT overlay, and toolbar badge show separate five-hour and weekly values; compare each percentage and reset timestamp with OpenAI's usage page
 - [ ] Light/dark, keyboard, focus, 100%/200% scaling, 375px-equivalent dashboard width, popup overflow, and reduced motion tested
 - [ ] Denied/granted optional permissions and disposable integration tests completed
 - [ ] Diagnostics manually reviewed for secrets

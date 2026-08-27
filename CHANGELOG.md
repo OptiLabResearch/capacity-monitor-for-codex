@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Added dual five-hour and weekly quota parsing and display across the popup, dashboard, ChatGPT overlay, and toolbar badge, with weekly-based pacing/history preserved for compatibility.
+- Added repository architecture/status navigation and documented the synthetic UI preview.
+- Corrected the in-product privacy navigation label.
+- Made release ZIP naming derive from the full package version and generalized version QA.
+- Added aggregate verification commands, task-scoped validation guidance, centralized file manifests, version-scoped release artifacts, and an external-only redacted agent-metrics summarizer.
+
 ## 0.6.0-beta.0 - 2026-08-12
 
 - Established the repository root as the canonical source and added a deterministic allowlisted release ZIP.

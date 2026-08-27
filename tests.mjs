@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  parseUsage, preferredWindow, inferCycle, calculatePacing, calculateObservedBurn,
+  parseUsage, preferredWindow, getShortWindow, getWeeklyWindow, getCurrentCycleHistory, inferCycle, calculatePacing, calculateObservedBurn,
   detectReset, detectThresholdCrossings, inferSessions, aggregateCycles,
   normalizeHistory, normalizeAlertState, sanitizeDiagnostics
 } from './core.js';
@@ -31,7 +31,22 @@ test('3. camelCase nested Codex response', () => {
   assert.equal(preferredWindow(usage).remainingPercent, 81);
   assert.equal(preferredWindow(usage).id, 'weekly');
 });
+test('4. explicit five-hour and weekly windows', () => {
+  const usage = parseUsage({ rate_limit: { five_hour: { percent_left: 73.4, reset_time_ms: now + 3 * hour, limit_window_seconds: 18000 }, weekly: { percent_left: 87.1, reset_at: new Date(now + week).toISOString(), limit_window_seconds: 604800 } } }, now);
+  assert.equal(getShortWindow(usage).label, '5-hour limit');
+  assert.equal(getShortWindow(usage).remainingPercent, 73.4);
+  assert.equal(getWeeklyWindow(usage).remainingPercent, 87.1);
+  assert.equal(getWeeklyWindow(usage).resetAt, Math.floor((now + week) / 1000));
+  assert.equal(preferredWindow(usage).id, 'weekly');
+});
 
+test('5. primary and secondary aliases retain duration classification', () => {
+  const usage = parseUsage({ rate_limits: { primary_window: { used_percent: 30, limit_window_seconds: 18000, reset_after_seconds: 3 * 3600 }, secondary_window: { used_percent: 40, limit_window_seconds: 604800, reset_after_seconds: 6 * 24 * 3600 } } }, now);
+  assert.equal(getShortWindow(usage).remainingPercent, 70);
+  assert.equal(getWeeklyWindow(usage).remainingPercent, 60);
+
+});
+test('6. dual-window analytics use the weekly cycle',()=>{const usage=parseUsage({rate_limit:{primary_window:{used_percent:30,limit_window_seconds:18000,reset_at:Math.floor((now+3*hour)/1000)},secondary_window:{used_percent:40,limit_window_seconds:604800,reset_at:Math.floor((now+week)/1000)}}},now),weeklyWindow=getWeeklyWindow(usage),shortWindow=getShortWindow(usage),history=[{t:now,remaining:70,resetAt:weeklyWindow.resetAt,windowId:'weekly'},{t:now+hour,remaining:60,resetAt:weeklyWindow.resetAt,windowId:'weekly'},{t:now+hour,remaining:50,resetAt:shortWindow.resetAt,windowId:'short'}];assert.deepEqual(getCurrentCycleHistory(history,usage).map(point=>point.windowId),['weekly','weekly'])});
 test('4. missing secondary window', () => {
   assert.equal(parseUsage({ rate_limit: { primary_window: { used_percent: 30, reset_at: (now + week) / 1000 } } }, now).windows.length, 1);
 });

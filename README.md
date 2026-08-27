@@ -8,9 +8,28 @@ This is not an official OpenAI product and is not affiliated with or endorsed by
 
 [Report an issue](https://github.com/OptiLabResearch/capacity-monitor-for-codex/issues) · [Privacy policy](https://github.com/OptiLabResearch/capacity-monitor-for-codex/blob/main/PRIVACY.md) · [Security reporting](https://github.com/OptiLabResearch/capacity-monitor-for-codex/security/advisories/new)
 
+## Current status and architecture
+
+This repository contains the public beta release `0.6.0-beta.0`. It is
+pre-Chrome-Web-Store publication; the current submission work is tracked in
+[`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md), and historical changes are in
+[`CHANGELOG.md`](CHANGELOG.md).
+
+The MV3 service worker in `background.js` fetches and persists normalized quota
+data. Shared parsing, pacing, reset, history, session, and diagnostics logic
+lives in `core.js`. `popup.js` is the quick status surface, while `dashboard.js`
+provides history, planning, settings, integrations, exports, and diagnostics.
+`overlay.js` adds the optional ChatGPT-page meter. `worker-example.js` is a
+separate, user-operated email relay example and is not shipped in the ZIP.
+
+For focused guidance, use [`TESTING.md`](TESTING.md) for validation,
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for change constraints,
+[`PRIVACY.md`](PRIVACY.md) and [`SECURITY.md`](SECURITY.md) for data and
+security boundaries, and [`EMAIL_RELAY.md`](EMAIL_RELAY.md) for relay setup.
+
 ## Features
 
-- Current Codex quota remaining/used, reset time, countdown, plan label, toolbar badge, and manual refresh.
+- Current five-hour and weekly Codex quota remaining/used, reset time, countdown, plan label, toolbar badge, and manual refresh.
 - Up to 180 days of locally observed snapshots, current-cycle chart, 7-day activity heatmap, cycle history, and inferred sessions.
 - A safe daily budget calculated from remaining quota and time until reset.
 - Observed burn rate and projections only after closely spaced real quota changes have been measured for at least 20 minutes.
@@ -34,6 +53,8 @@ The extension requests:
 The access token is used only for that request and is never stored. A direct extension request is attempted first. If browser cookie behavior prevents it, the extension can run the same two requests in the main world of an open ChatGPT tab. It does not read the page DOM, prompts, or conversation text.
 
 The parser identifies windows from returned duration/reset metadata rather than assuming that the first window is five-hour and the second is weekly. A single long-horizon window may be identified as weekly when duration metadata is absent. Unknown schemas fail closed and surface diagnostics.
+
+When both rolling windows are available, the popup, dashboard, ChatGPT overlay, and toolbar surface show separate five-hour and weekly values. Weekly quota remains the cycle basis for observed pacing and history so the existing analytics stay comparable across accounts that expose only one window.
 
 ## Analytics are observed, not invented
 
@@ -70,12 +91,22 @@ The Chrome Web Store link will be added after review; it is not published yet.
 Node.js 20 or newer is required. There are no runtime or build dependencies.
 
 ```sh
-npm run check
-npm test
-npm run package
+npm run verify          # default PR gate
+npm run preview         # optional synthetic local UI preview
+npm run verify:release  # release gate and package hash repeat
 ```
 
-The repository root is the one canonical source tree. `npm run package` creates a deterministic, store-safe ZIP in ignored `release/` using the allowlist in `release-files.json`. Documentation, tests, Worker examples, `.env`, and store assets are excluded. Repeated packaging of unchanged source produces the same SHA-256.
+The repository root is the one canonical source tree. `npm run preview` serves
+synthetic data locally and never contacts ChatGPT. `npm run verify` runs syntax
+checks, deterministic tests, static QA, and one package build.
+`npm run verify:release` repeats packaging and compares its SHA-256 before
+publishing. `npm run package` remains available when only the ZIP is needed.
+The current ZIP and SHA-256 companion are written to ignored
+`release/<package-version>/`; the allowlist is in `release-files.json`.
+Documentation, tests, Worker examples, `.env`, and store assets are excluded.
+The Chrome manifest uses a numeric version, while the full release label comes
+from `package.json` for the ZIP filename. Repeated packaging of unchanged
+source produces the same SHA-256.
 
 ## Permissions
 

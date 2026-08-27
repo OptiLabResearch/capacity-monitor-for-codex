@@ -1,12 +1,12 @@
 # Privacy policy
 
-Last updated: 12 August 2026
+Last updated: 27 August 2026
 
 Capacity Monitor for Codex is an independent, local-first browser extension. It is not affiliated with or endorsed by OpenAI.
 
 ## Data accessed and purpose
 
-After affirmative first-run consent, the extension accesses the authenticated ChatGPT session only to request Codex quota/rate-limit metadata from an internal, undocumented ChatGPT endpoint. Data can include quota percentages, quota-window duration, reset timing, plan label, and reset-credit metadata. It is used only to display capacity, retain observed history, calculate observed pacing, and deliver alerts the user enables.
+After affirmative first-run consent, the extension accesses the authenticated ChatGPT session only to request Codex quota/rate-limit metadata from an internal, undocumented ChatGPT endpoint. Data can include one or more rolling quota windows—typically a short five-hour window and a weekly window—along with quota percentages, quota-window duration, reset timing, plan label, and reset-credit metadata. It is used only to display capacity, retain observed history, calculate observed pacing, and deliver alerts the user enables. When both rolling windows are available, the extension displays them separately; weekly data remains the basis for observed pacing and history.
 
 The extension does not intentionally read or collect prompts, conversation text, passwords, unrelated browsing history, or ChatGPT access tokens for persistent storage. The short-lived ChatGPT access token is held in memory only for the quota request.
 

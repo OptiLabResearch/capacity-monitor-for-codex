@@ -8,6 +8,25 @@ This is not an official OpenAI product and is not affiliated with or endorsed by
 
 [Report an issue](https://github.com/OptiLabResearch/capacity-monitor-for-codex/issues) · [Privacy policy](https://github.com/OptiLabResearch/capacity-monitor-for-codex/blob/main/PRIVACY.md) · [Security reporting](https://github.com/OptiLabResearch/capacity-monitor-for-codex/security/advisories/new)
 
+## Current status and architecture
+
+This repository contains the public beta release `0.6.0-beta.0`. It is
+pre-Chrome-Web-Store publication; the current submission work is tracked in
+[`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md), and historical changes are in
+[`CHANGELOG.md`](CHANGELOG.md).
+
+The MV3 service worker in `background.js` fetches and persists normalized quota
+data. Shared parsing, pacing, reset, history, session, and diagnostics logic
+lives in `core.js`. `popup.js` is the quick status surface, while `dashboard.js`
+provides history, planning, settings, integrations, exports, and diagnostics.
+`overlay.js` adds the optional ChatGPT-page meter. `worker-example.js` is a
+separate, user-operated email relay example and is not shipped in the ZIP.
+
+For focused guidance, use [`TESTING.md`](TESTING.md) for validation,
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for change constraints,
+[`PRIVACY.md`](PRIVACY.md) and [`SECURITY.md`](SECURITY.md) for data and
+security boundaries, and [`EMAIL_RELAY.md`](EMAIL_RELAY.md) for relay setup.
+
 ## Features
 
 - Current Codex quota remaining/used, reset time, countdown, plan label, toolbar badge, and manual refresh.
@@ -72,10 +91,17 @@ Node.js 20 or newer is required. There are no runtime or build dependencies.
 ```sh
 npm run check
 npm test
+npm run preview       # optional synthetic local UI preview
 npm run package
 ```
 
-The repository root is the one canonical source tree. `npm run package` creates a deterministic, store-safe ZIP in ignored `release/` using the allowlist in `release-files.json`. Documentation, tests, Worker examples, `.env`, and store assets are excluded. Repeated packaging of unchanged source produces the same SHA-256.
+The repository root is the one canonical source tree. `npm run preview` serves
+synthetic data locally and never contacts ChatGPT. `npm run package` creates a
+deterministic, store-safe ZIP in ignored `release/` using the allowlist in
+`release-files.json`. Documentation, tests, Worker examples, `.env`, and store
+assets are excluded. The Chrome manifest uses a numeric version, while the
+full release label comes from `package.json` for the ZIP filename. Repeated
+packaging of unchanged source produces the same SHA-256.
 
 ## Permissions
 

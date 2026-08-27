@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added repository architecture/status navigation and documented the synthetic UI preview.
+- Corrected the in-product privacy navigation label.
+- Made release ZIP naming derive from the full package version and generalized version QA.
+
 ## 0.6.0-beta.0 - 2026-08-12
 
 - Established the repository root as the canonical source and added a deterministic allowlisted release ZIP.

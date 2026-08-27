@@ -4,10 +4,14 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
 const files = JSON.parse(fs.readFileSync(path.join(root, 'release-files.json'), 'utf8')).slice().sort();
 const releaseDir = path.join(root, 'release');
-const output = path.join(releaseDir, `capacity-monitor-for-codex-${manifest.version}-beta.zip`);
+if (!packageJson.version || !(packageJson.version === manifest.version || packageJson.version.startsWith(manifest.version + "-"))) {
+  throw new Error("package.json and manifest.json versions are incompatible");
+}
+const output = path.join(releaseDir, "capacity-monitor-for-codex-" + packageJson.version + ".zip");
 const fixedTime = dosDateTime(new Date('2026-01-01T00:00:00Z'));
 
 const entries = files.map(name => {

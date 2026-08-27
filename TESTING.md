@@ -16,6 +16,13 @@ npm run package
 
 `npm run package` verifies ZIP central-directory entries and writes a SHA-256 companion. Re-running it on unchanged source must produce the same hash.
 
+## Local UI preview
+
+Run `npm run preview` and open `http://127.0.0.1:4173/` for a synthetic
+dashboard preview. Use `?theme=light` for the light-theme override. The preview
+injects `scripts/mock-chrome.js`, uses synthetic quota/history data, and does not
+contact ChatGPT or deliver external alerts.
+
 ## Manual clean-profile test
 
 Use Windows 11 and current stable Chrome. Install the exact generated ZIP after extracting it to a new folder.

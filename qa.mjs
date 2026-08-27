@@ -22,7 +22,8 @@ const requiredDocs = ['README.md','LICENSE','PRIVACY.md','SECURITY.md','CONTRIBU
 for (const file of [...releaseFiles, ...requiredDocs, 'package.json', 'worker-example.js']) ok(fs.existsSync(path.join(root, file)), `missing ${file}`);
 
 const packageJson = JSON.parse(read('package.json'));
-ok(packageJson.version.startsWith(`${manifest.version}-beta`), 'package and manifest versions disagree');
+ok(packageJson.version === manifest.version || packageJson.version.startsWith(manifest.version + "-"), "package and manifest versions disagree");
+ok(read("scripts/package.mjs").includes("packageJson.version"), "package filename must use the package version");
 ok(Object.keys(packageJson).every(key => !['dependencies','devDependencies','optionalDependencies'].includes(key)), 'runtime/build dependencies are not expected');
 
 for (const [file, size] of [['icons/icon16.png',16],['icons/icon32.png',32],['icons/icon48.png',48],['icons/icon128.png',128]]) {

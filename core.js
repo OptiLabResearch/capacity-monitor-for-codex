@@ -3,6 +3,7 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 export const HOUR_MS = 60 * 60 * 1000;
 export const HISTORY_MAX_GAP_MS = 90 * 60 * 1000;
 export const STORAGE_SCHEMA_VERSION = 3;
+export const PARSER_VERSION = 4;
 
 export function clamp(n, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Number(n)));
@@ -13,6 +14,10 @@ export function isFiniteNumber(v) {
 }
 
 export function normalizeTimestampSeconds(v) {
+  if (typeof v === "string" && !/^\s*[+-]?\d+(?:\.\d+)?\s*$/.test(v)) {
+    const parsed = Date.parse(v);
+    if (Number.isFinite(parsed) && parsed > 0) return Math.round(parsed / 1000);
+  }
   const n = Number(v);
   if (!Number.isFinite(n) || n <= 0) return null;
   return n > 10_000_000_000 ? Math.round(n / 1000) : Math.round(n);
@@ -20,16 +25,20 @@ export function normalizeTimestampSeconds(v) {
 
 export function normalizeWindow(window, slot = "primary", nowMs = Date.now()) {
   if (!window || typeof window !== "object") return null;
+  const remainingInput = window.percent_left ?? window.percentLeft ?? window.remaining_percent ?? window.remainingPercent ?? window.remaining;
   const usedInput = window.used_percent ?? window.usedPercent ?? window.used;
-  const remainingInput = window.remaining_percent ?? window.remainingPercent ?? window.remaining;
-  const used = Number(usedInput ?? (isFiniteNumber(remainingInput) ? 100 - Number(remainingInput) : NaN));
+  const used = isFiniteNumber(remainingInput) ? 100 - Number(remainingInput) : Number(usedInput);
   const durationMins = Number(window.windowDurationMins ?? window.window_minutes ?? window.windowMinutes);
   const durationSeconds = Number(
     window.limit_window_seconds ??
+    window.limitWindowSeconds ??
     window.window_seconds ??
+    window.windowSeconds ??
+    window.duration_seconds ??
+    window.durationSeconds ??
     (Number.isFinite(durationMins) ? durationMins * 60 : NaN)
   );
-  let resetAt = normalizeTimestampSeconds(window.reset_at ?? window.resets_at ?? window.resetsAt);
+  let resetAt = normalizeTimestampSeconds(window.reset_time_ms ?? window.resetTimeMs ?? window.reset_at ?? window.resets_at ?? window.resetsAt);
   const resetAfter = Number(window.reset_after_seconds ?? window.resetAfterSeconds);
   if (!resetAt && Number.isFinite(resetAfter)) resetAt = Math.round(nowMs / 1000 + resetAfter);
 
@@ -51,12 +60,31 @@ export function classifyWindow(w, activeCount = 1, nowMs = Date.now()) {
   if (!w) return null;
   const seconds = w.windowSeconds;
   const untilReset = w.resetAt ? w.resetAt * 1000 - nowMs : null;
+  const slot = String(w.slot || "").toLowerCase().replace(/[ -]/g, "_");
+  const shortSlot = new Set(["five_hour", "five_hours", "fivehour", "fivehours", "short", "short_window", "5h"]).has(slot);
+  const weeklySlot = new Set(["weekly", "week", "weekly_window", "7d"]).has(slot);
+  const primarySlot = slot === "primary" || slot === "primary_window";
+  const secondarySlot = slot === "secondary" || slot === "secondary_window";
+
+  if (shortSlot) {
+    const hours = seconds && seconds >= 4 * 3600 && seconds <= 6 * 3600 ? Math.round(seconds / 3600) : 5;
+    return { ...w, id: "short", label: hours + "-hour limit", kind: "short", inferredKind: !seconds };
+  }
+  if (weeklySlot) {
+    return { ...w, id: "weekly", label: "Weekly limit", kind: "weekly", inferredKind: !seconds };
+  }
 
   if (seconds && seconds >= 6 * 24 * 3600 && seconds <= 8 * 24 * 3600) {
     return { ...w, id: "weekly", label: "Weekly limit", kind: "weekly" };
   }
   if (seconds && seconds >= 4 * 3600 && seconds <= 6 * 3600) {
     return { ...w, id: "short", label: `${Math.round(seconds / 3600)}-hour limit`, kind: "short" };
+  }
+  if (!seconds && primarySlot && untilReset != null && untilReset <= 6 * HOUR_MS) {
+    return { ...w, id: "short", label: "5-hour limit", kind: "short", inferredKind: true };
+  }
+  if (!seconds && secondarySlot && untilReset != null && untilReset > 18 * HOUR_MS) {
+    return { ...w, id: "weekly", label: "Weekly limit", kind: "weekly", inferredKind: true };
   }
   if (activeCount === 1) {
     // Current Plus accounts may expose just one Codex quota window. Long reset horizons
@@ -97,6 +125,8 @@ export function parseUsage(raw, nowMs = Date.now()) {
     if (normalized && (normalized.usedPercent != null || normalized.resetAt || normalized.windowSeconds)) candidates.push(normalized);
   };
   for (const root of roots) {
+    add(root.five_hour ?? root.fiveHour ?? root.five_hours ?? root.fiveHours, "five_hour");
+    add(root.weekly ?? root.weekly_window ?? root.weeklyWindow ?? root.week, "weekly");
     add(root.primary_window ?? root.primaryWindow ?? root.primary, "primary");
     add(root.secondary_window ?? root.secondaryWindow ?? root.secondary, "secondary");
     const windows = root.windows ?? root.quota_windows ?? root.quotaWindows;
@@ -114,7 +144,7 @@ export function parseUsage(raw, nowMs = Date.now()) {
   }
 
   return {
-    schemaVersion: 3,
+    schemaVersion: STORAGE_SCHEMA_VERSION,
     planType: raw?.plan_type ?? raw?.planType ?? raw?.account?.planType ?? null,
     windows: unique,
     resetCredits: normalizeResetCredits(raw),
@@ -123,7 +153,15 @@ export function parseUsage(raw, nowMs = Date.now()) {
 }
 
 export function preferredWindow(usage) {
-  return usage?.windows?.find(w => w.id === "weekly") || usage?.windows?.[0] || null;
+  return getWeeklyWindow(usage) || usage?.windows?.[0] || null;
+}
+
+export function getWeeklyWindow(usage) {
+  return usage?.windows?.find(w => w?.kind === "weekly" || w?.id === "weekly") || null;
+}
+
+export function getShortWindow(usage) {
+  return usage?.windows?.find(w => w?.kind === "short" || w?.id === "short") || null;
 }
 
 export function inferCycle(window, nowMs = Date.now()) {

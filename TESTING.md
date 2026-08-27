@@ -24,6 +24,8 @@ Targeted commands remain available when iterating:
 
 `tests.mjs` contains deterministic synthetic cases for single weekly, snake_case, camelCase/nested Codex, missing secondary, malformed response, missing reset, 100%/0%, confirmed replenishment, timestamp-only movement, threshold crossing/repeat/restart, insufficient/valid observed burn, quota gain, long sampling gap, session inference, cycle rollover, corrupt storage, non-fabricated pacing, and diagnostics redaction.
 
+Dual-window fixtures cover explicit five-hour/weekly fields, primary/secondary duration classification, ISO and millisecond reset timestamps, and weekly preference for pacing/history.
+
 `qa.mjs` validates MV3 permissions/CSP, release allowlist, icon dimensions/alpha declaration, no remote or inline executable code, no unsafe HTML sinks, HTML/JS ID wiring, common secret signatures, Worker relay restrictions, disclosure files, and package/version consistency.
 
 `npm run package` verifies ZIP central-directory entries and writes a SHA-256 companion. `npm run verify:release` runs it twice and confirms that unchanged source produces the same hash.
@@ -62,7 +64,7 @@ Use Windows 11 and current stable Chrome. Install the exact ZIP from `release/<p
 1. Confirm the install prompt is limited to ChatGPT access and notifications-related functionality.
 2. Before consent, verify no quota request or polling alarm runs.
 3. Review first-run disclosure, open the privacy page, consent, and refresh while signed in.
-4. Compare remaining percentage and reset timestamp with OpenAI's usage page.
+4. When both windows are available, verify that the popup, dashboard, ChatGPT overlay, and toolbar badge show separate five-hour and weekly values. Compare each remaining percentage and reset timestamp with OpenAI's usage page.
 5. Test direct refresh with no ChatGPT tab, fallback with an open ChatGPT tab, signed-out failure, then recovery.
 6. Run Dashboard → Diagnostics → Self-test and review copied diagnostics for secrets/account details.
 7. Verify popup and dashboard in light/dark mode, 100% and 200% scaling, keyboard-only navigation, visible focus, tooltip focus/Escape behavior, dropdown options, long errors, scrolling, and no horizontal page overflow.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added dual five-hour and weekly quota parsing and display across the popup, dashboard, ChatGPT overlay, and toolbar badge, with weekly-based pacing/history preserved for compatibility.
 - Added repository architecture/status navigation and documented the synthetic UI preview.
 - Corrected the in-product privacy navigation label.
 - Made release ZIP naming derive from the full package version and generalized version QA.

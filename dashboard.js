@@ -1,5 +1,5 @@
 import {
-  preferredWindow,getCurrentCycleHistory,calculatePacing,inferSessions,buildHeatmap,
+  preferredWindow,getShortWindow,getWeeklyWindow,getCurrentCycleHistory,calculatePacing,inferSessions,buildHeatmap,
   aggregateCycles,sessionPlanner,formatDurationMs,inferCycle
 } from './core.js';
 import { installHelpTooltips } from './help.js';
@@ -7,7 +7,44 @@ const $=id=>document.getElementById(id); let state={};
 const fmtPct=v=>Number.isFinite(v)?`${v.toFixed(v<10?1:0)}%`:'—';
 const fmtDate=ms=>Number.isFinite(ms)?new Date(ms).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
 const fmtDur=ms=>formatDurationMs(ms);
-function getSettings(){return state.settings||{}}
+function renderQuotaSummary(usage) {
+  const holder = $('quotaSummary');
+  holder.textContent = '';
+  const shortWindow = getShortWindow(usage);
+  const weeklyWindow = getWeeklyWindow(usage);
+  const fallback = preferredWindow(usage);
+  const windows = [shortWindow, weeklyWindow].filter(window => Number.isFinite(window?.remainingPercent));
+  if (!windows.length && Number.isFinite(fallback?.remainingPercent)) windows.push(fallback);
+  if (!windows.length) {
+    holder.textContent = 'No quota windows returned.';
+    return;
+  }
+
+  for (const window of windows) {
+    const card = document.createElement('article');
+    card.className = 'panel quota-card';
+    const header = document.createElement('div');
+    header.className = 'panel-head';
+    const name = document.createElement('strong');
+    const remaining = document.createElement('span');
+    name.textContent = window.label;
+    remaining.textContent = Math.round(window.remainingPercent) + '% remaining';
+    header.append(name, remaining);
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const fill = document.createElement('div');
+    fill.style.width = String(window.remainingPercent) + '%';
+    bar.append(fill);
+    const reset = document.createElement('div');
+    reset.className = 'muted';
+    reset.textContent = window.resetAt
+      ? 'Resets ' + new Date(window.resetAt * 1000).toLocaleString() + ' · ' + fmtDur(window.resetAt * 1000 - Date.now())
+      : 'Reset unavailable';
+    card.append(header, bar, reset);
+    holder.append(card);
+  }
+}
+function getSettings(){const settings=state.settings||{},mode=settings.toolbarMode==='remaining'?'both':settings.toolbarMode;return {...settings,toolbarMode:['both','weekly','short','used','pace'].includes(mode)?mode:'both'}}
 function statusText(p){return !p?.burn?'Collecting':p?.status==='too-fast'?'Too fast':p?.status==='underusing'?'Underusing':'On pace'}
 function recommendation(w,p){if(!w||!p)return'Quota data is unavailable.';if(p.shortfallMs>0)return`At the current pace, Codex is projected to run out about ${fmtDur(p.shortfallMs)} before reset. Reduce usage to roughly ${p.safePerDay.toFixed(1)}%/day or accept an early cutoff.`;if(p.status==='underusing'&&p.cycle?.remainingMs<2*24*3600000)return`You have ${Math.round(w.remainingPercent)}% remaining relatively late in the cycle. You can increase usage without exceeding your configured target.`;if(p.burn?.perDay>0)return`Current pace looks sustainable. Estimated remaining at reset: ${Math.max(0,Math.round(p.predictedRemainingAtReset??w.remainingPercent))}%.`;return'Not enough observed quota movement yet to estimate burn rate. Safe daily budget is still calculated from remaining quota and time until reset.'}
 function renderOverview(){const usage=state.usage,w=preferredWindow(usage),h=getCurrentCycleHistory(state.history||[],usage),s=getSettings();$('subtitle').textContent=usage?.planType?`${usage.planType} plan · last updated ${state.lastSuccessAt?new Date(state.lastSuccessAt).toLocaleTimeString():'—'}`:'No current quota snapshot';if(!w)return;const p=calculatePacing(w,h,{targetRemaining:s.targetRemaining,tolerance:s.paceTolerance});$('limitName').textContent=w.label;$('remaining').textContent=`${Math.round(w.remainingPercent)}%`;$('remainingBar').style.width=`${w.remainingPercent}%`;$('resetLine').textContent=w.resetAt?`Resets ${new Date(w.resetAt*1000).toLocaleString()} · ${fmtDur(w.resetAt*1000-Date.now())}`:'Reset unavailable';const health=w.remainingPercent<=10?'Critical':w.remainingPercent<=25?'Low':p?.status==='too-fast'?'At risk':'Healthy';$('healthPill').textContent=health;$('pacePill').textContent=p?statusText(p):'—';$('burn').textContent=p?.burn?`${p.burn.perDay.toFixed(1)}% / day`:'Learning…';$('safe').textContent=p?`${p.safePerDay.toFixed(1)}% / day`:'—';$('empty').textContent=p?.burn?(p.exhaustionAt?fmtDate(p.exhaustionAt):'Not projected'):'Need observed use';$('atReset').textContent=p?.burn&&Number.isFinite(p?.predictedRemainingAtReset)?`${Math.round(p.predictedRemainingAtReset)}%`:'Need observed use';if(p?.cycle){$('idealLine').style.left=`${p.cycle.elapsedFraction*100}%`;$('actualDot').style.left=`${w.usedPercent}%`;$('cycleElapsed').textContent=fmtPct(p.cycle.elapsedFraction*100)}$('cycleUsed').textContent=fmtPct(w.usedPercent);$('resetCredits').textContent=String(usage?.resetCredits?.filter(c=>c.status==='available').length||0);$('utilization').textContent=fmtPct(w.usedPercent);$('valueUtil').textContent=fmtPct(w.usedPercent);$('unusedCapacity').textContent=fmtPct(w.remainingPercent);$('recommendation').textContent=recommendation(w,p)}
@@ -23,7 +60,7 @@ function fillSettings(){const s=getSettings();$('thresholds').value=(s.threshold
 function collectSettings(){return{...getSettings(),thresholds:$('thresholds').value.split(',').map(x=>Number(x.trim())).filter(n=>Number.isFinite(n)&&n>=0&&n<=100),predictiveAlert:$('predictiveAlert').checked,burnAlert:$('burnAlert').checked,unusedCapacityAlert:$('unusedAlert').checked,unusedCapacityThreshold:Number($('unusedThreshold').value),unusedCapacityHours:Number($('unusedHours').value),resetAlert:$('resetAlert').checked,alertCooldownMinutes:Number($('cooldown').value),emailEnabled:$('emailEnabled').checked,emailRelayUrl:$('emailRelayUrl').value.trim(),emailRelaySecret:$('emailRelaySecret').value,discordEnabled:$('discordEnabled').checked,discordWebhook:$('discordWebhook').value.trim(),telegramEnabled:$('telegramEnabled').checked,telegramBotToken:$('telegramToken').value.trim(),telegramChatId:$('telegramChat').value.trim(),genericWebhookEnabled:$('webhookEnabled').checked,genericWebhook:$('webhook').value.trim(),pollMinutes:Number($('pollMinutes').value),toolbarMode:$('toolbarMode').value,overlayEnabled:$('overlayEnabled').checked,overlayCompact:$('overlayCompact').checked,targetRemaining:Number($('targetRemaining').value),paceTolerance:Number($('paceTolerance').value),subscriptionMonthlyCost:$('monthlyCost').value,subscriptionCurrency:$('currency').value}}
 async function save(){const settings=collectSettings();await chrome.storage.local.set({settings});state.settings=settings;$('saveStatus').textContent='Saved';setTimeout(()=>$('saveStatus').textContent='',1500);renderAll()}
 function renderDiagnostics(){const d=state.diagnostics||{};$('diagnosticText').textContent=JSON.stringify({extensionVersion:chrome.runtime.getManifest().version,lastSuccessAt:state.lastSuccessAt?new Date(state.lastSuccessAt).toISOString():null,lastError:state.lastError||null,source:d.source||null,latencyMs:d.latencyMs||null,parserVersion:d.parserVersion||null,windowsFound:d.windowsFound||0,responseShape:d.responseShape||null,historyPoints:Array.isArray(state.history)?state.history.length:0,resetEvents:Array.isArray(state.resetEvents)?state.resetEvents.length:0,normalizedUsage:state.usage||null},null,2);const holder=$('healthCards');holder.textContent='';for(const [label,value] of [['Connection',state.lastError?'Error':'OK'],['Parser',state.usage?.windows?.length?'OK':'No window'],['History',`${state.history?.length||0} samples`],['Last refresh',state.lastSuccessAt?new Date(state.lastSuccessAt).toLocaleTimeString():'Never']]){const article=document.createElement('article');article.className='stat';const span=document.createElement('span'),strong=document.createElement('b');span.textContent=label;strong.textContent=value;article.append(span,strong);holder.append(article)}}
-function renderAll(){renderOverview();drawChart();renderHeat();renderCycles();renderSessions();renderPlanner();renderAlerts();renderDiagnostics()}
+function renderAll(){renderQuotaSummary(state.usage);renderOverview();drawChart();renderHeat();renderCycles();renderSessions();renderPlanner();renderAlerts();renderDiagnostics()}
 async function load(){state=await chrome.storage.local.get(['usage','history','settings','resetEvents','alertHistory','diagnostics','lastError','lastSuccessAt']);$('version').textContent=chrome.runtime.getManifest().version;fillSettings();renderAll()}
 async function refresh(){const button=$('refresh'),label=button.textContent;button.disabled=true;button.textContent='Refreshing…';try{const r=await chrome.runtime.sendMessage({type:'refresh'});if(!r?.ok)alert(r?.error||'Refresh failed');await load()}finally{button.disabled=false;button.textContent=label}}
 async function requestOrigin(urlText){const url=new URL(urlText);if(url.protocol!=='https:')throw new Error('Only HTTPS integrations are supported');if(url.username||url.password)throw new Error('URLs containing embedded credentials are not supported');const origin=`${url.protocol}//${url.host}/*`;return chrome.permissions.request({origins:[origin]})}

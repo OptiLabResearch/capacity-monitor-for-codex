@@ -36,3 +36,9 @@ main{min-width:0}
 .tr span{overflow-wrap:anywhere}
 @media(max-width:520px){main{padding:18px 14px 72px}.cards-4,.metric-grid,.planner-result{grid-template-columns:1fr}.title-row,.section-title{align-items:flex-start;flex-direction:column}.button-row{width:100%;justify-content:flex-start;flex-wrap:wrap}.big{font-size:40px}.panel,.stat{padding:14px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+.quota-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dashboard-quota-grid{margin-top:12px}
+.dashboard-quota-grid .quota-card{min-width:0}
+.dashboard-quota-grid .bar{margin:14px 0 8px}
+.dashboard-quota-grid .panel-head strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:520px){.dashboard-quota-grid{grid-template-columns:1fr}}

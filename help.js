@@ -18,7 +18,7 @@ const HELP = {
   webhookEnabled: "Sends alert event JSON to any HTTPS webhook you control, useful for n8n, Make, Zapier, Home Assistant or custom automation.",
   webhook: "Full HTTPS webhook URL. Host access is requested only for the exact origin you configure.",
   pollMinutes: "How often the extension refreshes Codex quota in the background. 10 minutes is a good balance between freshness and unnecessary requests.",
-  toolbarMode: "Controls what appears in the extension badge: quota remaining, quota used, or a simple pacing status once enough history exists.",
+  toolbarMode: "Controls the badge number: both windows by default, or one selected window, used quota, or pacing status. Hover the icon for exact five-hour and weekly values.",
   overlayEnabled: "Shows a small Codex capacity meter directly on ChatGPT pages so you do not need to open the extension popup.",
   overlayCompact: "Uses the smaller version of the ChatGPT page overlay.",
   targetRemaining: "Optional quota percentage you want left when the weekly reset occurs. Use 0% if your goal is simply not to run out early.",

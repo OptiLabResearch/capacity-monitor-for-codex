@@ -13,6 +13,7 @@
 - [ ] Exact ZIP installs in a clean stable-Chrome profile
 - [ ] First-run consent blocks quota access until accepted
 - [ ] Signed-in direct/fallback refresh and signed-out recovery tested
+- [ ] When both windows are available, popup, dashboard, ChatGPT overlay, and toolbar badge show separate five-hour and weekly values; compare each percentage and reset timestamp with OpenAI's usage page
 - [ ] Light/dark, keyboard, focus, 100%/200% scaling, 375px-equivalent dashboard width, popup overflow, and reduced motion tested
 - [ ] Denied/granted optional permissions and disposable integration tests completed
 - [ ] Diagnostics manually reviewed for secrets

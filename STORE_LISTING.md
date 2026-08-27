@@ -14,7 +14,7 @@ Monitor Codex subscription capacity and notify the user about remaining-capacity
 
 ## Detailed description
 
-Capacity Monitor for Codex displays quota percentage and reset timing from the user's authenticated ChatGPT session. It stores observed quota snapshots locally to provide history, inferred sessions, and pacing. Browser alerts are local. Email, Telegram, Discord, and generic webhook delivery are optional, off by default, and configured by the user.
+Capacity Monitor for Codex displays separate five-hour and weekly quota percentages and reset timing when both rolling windows are available, while supporting accounts that expose only one window. It stores observed quota snapshots locally to provide history, inferred sessions, and pacing. Browser alerts are local. Email, Telegram, Discord, and generic webhook delivery are optional, off by default, and configured by the user.
 
 The extension does not bypass, reset, extend, or circumvent Codex usage limits. It is an independent project and is not affiliated with or endorsed by OpenAI.
 
@@ -22,7 +22,7 @@ Quota reporting relies on an internal, undocumented ChatGPT endpoint because no 
 
 ## Prominent data disclosure
 
-To provide its single purpose, the extension accesses the authenticated ChatGPT session and Codex quota/rate-limit metadata (percentage, reset timing, window metadata, and plan/reset-credit metadata when available). It does not intentionally read prompts or conversation text. The short-lived access token is not stored. Quota history and settings are retained in Chrome local extension storage.
+To provide its single purpose, the extension accesses the authenticated ChatGPT session and Codex quota/rate-limit metadata (percentage, reset timing, one or more rolling windows such as five-hour and weekly, and plan/reset-credit metadata when available). It does not intentionally read prompts or conversation text. The short-lived access token is not stored. Quota history and settings are retained in Chrome local extension storage.
 
 Optional external alerts transmit minimal alert data only after the user enables a channel and grants its HTTPS host permission. Parties can include the user's relay/Brevo, Telegram, Discord, or the user's configured webhook operator. No developer analytics or advertising service receives data.
 

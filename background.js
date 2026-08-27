@@ -1,7 +1,7 @@
 import {
-  parseUsage, preferredWindow, getCurrentCycleHistory, calculatePacing,
+  parseUsage, preferredWindow, getShortWindow, getWeeklyWindow, getCurrentCycleHistory, calculatePacing,
   detectReset, detectThresholdCrossings, sanitizeDiagnostics, normalizeHistory,
-  normalizeThresholds, normalizeAlertState, STORAGE_SCHEMA_VERSION
+  normalizeThresholds, normalizeAlertState, STORAGE_SCHEMA_VERSION, PARSER_VERSION
 } from "./core.js";
 
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
@@ -13,7 +13,7 @@ const HISTORY_MIN_GAP_MS = 5 * 60 * 1000;
 
 const DEFAULT_SETTINGS = {
   pollMinutes: 10,
-  toolbarMode: "remaining",
+  toolbarMode: "both",
   overlayEnabled: true,
   overlayCompact: true,
   targetRemaining: 0,
@@ -109,6 +109,8 @@ function sanitizeSettings(value) {
   const settings = { ...DEFAULT_SETTINGS };
   for (const key of Object.keys(DEFAULT_SETTINGS)) if (Object.hasOwn(input, key)) settings[key] = input[key];
   settings.pollMinutes = Math.max(5, Math.min(60, Number(settings.pollMinutes) || 10));
+  if (settings.toolbarMode === "remaining") settings.toolbarMode = "both";
+  if (!["both", "weekly", "short", "used", "pace"].includes(settings.toolbarMode)) settings.toolbarMode = "both";
   settings.targetRemaining = Math.max(0, Math.min(100, Number(settings.targetRemaining) || 0));
   settings.paceTolerance = Math.max(0, Math.min(100, Number(settings.paceTolerance) || 3));
   settings.alertCooldownMinutes = Math.max(30, Math.min(10080, Number(settings.alertCooldownMinutes) || 120));
@@ -209,7 +211,7 @@ async function persistUsage(parsed, requestInfo) {
     lastSuccessAt: Date.now(),
     diagnostics: {
       lastSuccessAt: Date.now(), source: requestInfo.source, latencyMs: requestInfo.latencyMs,
-      directError: requestInfo.directError, parserVersion: 3,
+      directError: requestInfo.directError, parserVersion: PARSER_VERSION,
       windowsFound: parsed.windows.length, responseShape: requestInfo.responseShape
     }
   });
@@ -228,6 +230,10 @@ function updateHistory(history, parsed) {
   return kept.slice(-12000);
 }
 
+function quotaName(window) {
+  return window?.label?.replace(/\s+limit$/i, "") || "quota";
+}
+
 async function handleReset(oldUsage, newUsage, resetEvents, alertState, alertHistory) {
   const oldW = preferredWindow(oldUsage), newW = preferredWindow(newUsage);
   const result = detectReset(oldW, newW);
@@ -243,7 +249,7 @@ async function handleReset(oldUsage, newUsage, resetEvents, alertState, alertHis
 
   const settings = await getSettings();
   if (settings.resetAlert) {
-    const dispatched = await dispatchAlert("Codex capacity is back", `${newW.label.replace(" limit", "")} capacity increased from ${Math.round(result.oldRemaining)}% to ${Math.round(result.newRemaining)}%.`, "reset");
+    const dispatched = await dispatchAlert("Codex capacity is back", `${quotaName(newW)} capacity increased from ${Math.round(result.oldRemaining)}% to ${Math.round(result.newRemaining)}%.`, "reset");
     alertHistory.push(dispatched);
   }
   return { resetEvents, alertState, alertHistory };
@@ -269,7 +275,7 @@ async function handleAlerts(oldUsage, newUsage, history, alertState, alertHistor
   const thresholds = normalizeThresholds(settings.thresholds);
   for (const t of detectThresholdCrossings(oldW?.remainingPercent, newW.remainingPercent, thresholds)) {
     if (alertState.thresholds?.[t]) continue;
-    const item = await dispatchAlert(`Codex quota: ${t}% threshold`, `${Math.round(newW.remainingPercent)}% remains in your weekly Codex quota.`, "threshold");
+    const item = await dispatchAlert(`Codex quota: ${t}% threshold`, `${Math.round(newW.remainingPercent)}% remains in your ${quotaName(newW)} Codex quota.`, "threshold");
     alertHistory.push(item); alertState.thresholds[t] = Date.now();
   }
 
@@ -279,7 +285,7 @@ async function handleAlerts(oldUsage, newUsage, history, alertState, alertHistor
   const canFire = key => !alertState.predictive?.[key] || Date.now() - alertState.predictive[key] >= cooldown;
 
   if (settings.predictiveAlert && pacing?.shortfallMs > 0 && canFire("shortfall")) {
-    const item = await dispatchAlert("Codex quota may run out early", `At the current pace, quota is projected to run out before the weekly reset.`, "predictive");
+    const item = await dispatchAlert("Codex quota may run out early", `At the current pace, quota is projected to run out before the ${quotaName(newW)} reset.`, "predictive");
     alertHistory.push(item); alertState.predictive.shortfall = Date.now();
   }
   if (settings.burnAlert && pacing?.burn && pacing.safePerDay > 0 && pacing.burn.perDay > pacing.safePerDay * 1.35 && canFire("burn")) {
@@ -310,26 +316,71 @@ function badgeColor(value) {
   if (value <= 50) return "#a16207";
   return "#15803d";
 }
+function hasRemaining(window) {
+  return Number.isFinite(window?.remainingPercent);
+}
+function badgeWindowText(window, label) {
+  if (!hasRemaining(window)) return null;
+  const reset = window.resetAt ? " · reset " + new Date(window.resetAt * 1000).toLocaleString() : "";
+  return label + ": " + Math.round(window.remainingPercent) + "% remaining" + reset;
+}
+function displayWindowForMode(mode, shortWindow, weeklyWindow, fallback) {
+  if (mode === "short") return shortWindow || weeklyWindow || fallback;
+  if (mode === "weekly") return weeklyWindow || shortWindow || fallback;
+  return weeklyWindow || shortWindow || fallback;
+}
+function badgeTextForMode(mode, shortWindow, weeklyWindow, fallback, pacing) { if (mode === "both") { const values = [shortWindow, weeklyWindow].filter(hasRemaining).map(window => String(Math.round(window.remainingPercent))); if (values.length) return values.join("/"); } const display = displayWindowForMode(mode, shortWindow, weeklyWindow, fallback); if (mode === "pace") { if (!pacing?.burn) return "…"; return pacing.status === "too-fast" ? "FAST" : pacing.status === "underusing" ? "LOW" : "OK"; } if (mode === "used") return Number.isFinite(display?.usedPercent) ? String(Math.round(display.usedPercent)) : "?"; return Number.isFinite(display?.remainingPercent) ? String(Math.round(display.remainingPercent)) : "?"; }
 async function updateBadge(parsed, history) {
   const settings = await getSettings();
+  const shortWindow = getShortWindow(parsed);
+  const weeklyWindow = getWeeklyWindow(parsed);
   const w = preferredWindow(parsed);
-  if (!w || !Number.isFinite(w.remainingPercent)) return chrome.action.setBadgeText({ text: "?" });
+  if (!w || !Number.isFinite(w.remainingPercent)) {
+    await chrome.action.setBadgeText({ text: "?" });
+    await chrome.action.setTitle({ title: "Codex — quota unavailable" });
+    return;
+  }
   const pacing = calculatePacing(w, getCurrentCycleHistory(history, parsed), { targetRemaining: settings.targetRemaining, tolerance: settings.paceTolerance });
-  let text = String(Math.round(w.remainingPercent));
-  if (settings.toolbarMode === "pace" && pacing) text = pacing.status === "too-fast" ? "FAST" : pacing.status === "underusing" ? "LOW" : "OK";
-  if (settings.toolbarMode === "used") text = String(Math.round(w.usedPercent));
+  const display = displayWindowForMode(settings.toolbarMode, shortWindow, weeklyWindow, w);
+  const text = badgeTextForMode(settings.toolbarMode, shortWindow, weeklyWindow, w, pacing);
   await chrome.action.setBadgeText({ text });
-  await chrome.action.setBadgeBackgroundColor({ color: badgeColor(w.remainingPercent) });
-  await chrome.action.setBadgeTextColor?.({ color: "#ffffff" }).catch(() => {});
-  await chrome.action.setTitle({ title: `Codex — ${Math.round(w.remainingPercent)}% remaining${w.resetAt ? ` · reset ${new Date(w.resetAt*1000).toLocaleString()}` : ""}` });
-  await setDynamicIcon(w.remainingPercent);
+  const colorValues = [shortWindow, weeklyWindow].filter(hasRemaining).map(window => window.remainingPercent);
+  const colorValue = settings.toolbarMode === "both" && colorValues.length ? Math.min(...colorValues) : display.remainingPercent;
+  await chrome.action.setBadgeBackgroundColor({ color: badgeColor(colorValue) });
+  try { await chrome.action.setBadgeTextColor?.({ color: "#ffffff" }); } catch {}
+  const summary = [
+    badgeWindowText(shortWindow, "5-hour"),
+    badgeWindowText(weeklyWindow, "Weekly")
+  ].filter(Boolean);
+  await chrome.action.setTitle({ title: "Codex — " + (summary.length ? summary.join(" · ") : badgeWindowText(w, quotaName(w)) || "quota unavailable") });
+  await setDynamicIcon(shortWindow?.remainingPercent, weeklyWindow?.remainingPercent, w.remainingPercent);
 }
-async function setDynamicIcon(remaining) {
+async function setDynamicIcon(shortRemaining, weeklyRemaining, fallbackRemaining) {
   try {
     const size = 32, canvas = new OffscreenCanvas(size, size), ctx = canvas.getContext("2d");
-    ctx.clearRect(0,0,size,size); ctx.lineWidth=4; ctx.strokeStyle="#6b7280"; ctx.beginPath(); ctx.arc(16,16,11,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle=badgeColor(remaining); ctx.lineCap="round"; ctx.beginPath(); ctx.arc(16,16,11,-Math.PI/2,-Math.PI/2+Math.PI*2*(remaining/100)); ctx.stroke();
-    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(16,16,3,0,Math.PI*2); ctx.fill();
+    const normalize = value => Number.isFinite(Number(value)) ? Math.max(0, Math.min(100, Number(value))) : null;
+    const short = normalize(shortRemaining), weekly = normalize(weeklyRemaining);
+    if (short != null && weekly != null) {
+      const drawGauge = (value, y, label) => {
+        ctx.fillStyle = "#374151";
+        ctx.fillRect(1, y, 30, 10);
+        ctx.fillStyle = badgeColor(value);
+        ctx.fillRect(1, y, 30 * value / 100, 10);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 6px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(label, 3, y + 7);
+        ctx.textAlign = "right";
+        ctx.fillText(String(Math.round(value)), 30, y + 7);
+      };
+      drawGauge(short, 2, "5h");
+      drawGauge(weekly, 18, "W");
+    } else {
+      const remaining = weekly ?? short ?? normalize(fallbackRemaining);
+      ctx.clearRect(0,0,size,size); ctx.lineWidth=4; ctx.strokeStyle="#6b7280"; ctx.beginPath(); ctx.arc(16,16,11,0,Math.PI*2); ctx.stroke();
+      ctx.strokeStyle=badgeColor(remaining); ctx.lineCap="round"; ctx.beginPath(); ctx.arc(16,16,11,-Math.PI/2,-Math.PI/2+Math.PI*2*(remaining/100)); ctx.stroke();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(16,16,3,0,Math.PI*2); ctx.fill();
+    }
     await chrome.action.setIcon({ imageData: ctx.getImageData(0,0,size,size) });
   } catch {}
 }

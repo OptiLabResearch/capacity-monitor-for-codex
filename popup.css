@@ -31,3 +31,10 @@ body::-webkit-scrollbar{width:10px}body::-webkit-scrollbar-track{background:tran
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 .actions .secondary{justify-self:stretch}
 .section-head{gap:8px;align-items:flex-start}.section-head>*{min-width:0}.section-head>.muted{text-align:right;line-height:1.25}
+.quota-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.quota-window{min-width:0;border:1px solid var(--border-soft);border-radius:9px;padding:8px}
+.quota-window .row{gap:6px;font-size:12px}
+.quota-window .row strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quota-window .row span{white-space:nowrap}
+.quota-window .bar{height:8px;margin:8px 0 6px}
+@media(max-width:330px){.quota-grid{grid-template-columns:1fr}}

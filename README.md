@@ -29,7 +29,7 @@ security boundaries, and [`EMAIL_RELAY.md`](EMAIL_RELAY.md) for relay setup.
 
 ## Features
 
-- Current Codex quota remaining/used, reset time, countdown, plan label, toolbar badge, and manual refresh.
+- Current five-hour and weekly Codex quota remaining/used, reset time, countdown, plan label, toolbar badge, and manual refresh.
 - Up to 180 days of locally observed snapshots, current-cycle chart, 7-day activity heatmap, cycle history, and inferred sessions.
 - A safe daily budget calculated from remaining quota and time until reset.
 - Observed burn rate and projections only after closely spaced real quota changes have been measured for at least 20 minutes.
@@ -53,6 +53,8 @@ The extension requests:
 The access token is used only for that request and is never stored. A direct extension request is attempted first. If browser cookie behavior prevents it, the extension can run the same two requests in the main world of an open ChatGPT tab. It does not read the page DOM, prompts, or conversation text.
 
 The parser identifies windows from returned duration/reset metadata rather than assuming that the first window is five-hour and the second is weekly. A single long-horizon window may be identified as weekly when duration metadata is absent. Unknown schemas fail closed and surface diagnostics.
+
+When both rolling windows are available, the popup, dashboard, ChatGPT overlay, and toolbar surface show separate five-hour and weekly values. Weekly quota remains the cycle basis for observed pacing and history so the existing analytics stay comparable across accounts that expose only one window.
 
 ## Analytics are observed, not invented
 

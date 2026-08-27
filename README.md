@@ -89,19 +89,22 @@ The Chrome Web Store link will be added after review; it is not published yet.
 Node.js 20 or newer is required. There are no runtime or build dependencies.
 
 ```sh
-npm run check
-npm test
-npm run preview       # optional synthetic local UI preview
-npm run package
+npm run verify          # default PR gate
+npm run preview         # optional synthetic local UI preview
+npm run verify:release  # release gate and package hash repeat
 ```
 
 The repository root is the one canonical source tree. `npm run preview` serves
-synthetic data locally and never contacts ChatGPT. `npm run package` creates a
-deterministic, store-safe ZIP in ignored `release/` using the allowlist in
-`release-files.json`. Documentation, tests, Worker examples, `.env`, and store
-assets are excluded. The Chrome manifest uses a numeric version, while the
-full release label comes from `package.json` for the ZIP filename. Repeated
-packaging of unchanged source produces the same SHA-256.
+synthetic data locally and never contacts ChatGPT. `npm run verify` runs syntax
+checks, deterministic tests, static QA, and one package build.
+`npm run verify:release` repeats packaging and compares its SHA-256 before
+publishing. `npm run package` remains available when only the ZIP is needed.
+The current ZIP and SHA-256 companion are written to ignored
+`release/<package-version>/`; the allowlist is in `release-files.json`.
+Documentation, tests, Worker examples, `.env`, and store assets are excluded.
+The Chrome manifest uses a numeric version, while the full release label comes
+from `package.json` for the ZIP filename. Repeated packaging of unchanged
+source produces the same SHA-256.
 
 ## Permissions
 

@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "test": "node tests.mjs && node qa.mjs",
-    "check": "node --check core.js && node --check background.js && node --check popup.js && node --check dashboard.js && node --check help.js && node --check overlay.js && node --check onboarding.js && node --check worker-example.js",
+    "check": "node scripts/check.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:release": "node scripts/verify.mjs --release",
+    "agent:metrics": "node scripts/summarize-agent-metrics.mjs",
     "package": "node scripts/package.mjs",
     "preview": "node scripts/preview.mjs"
   },

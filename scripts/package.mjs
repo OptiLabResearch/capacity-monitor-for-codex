@@ -7,7 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
 const files = JSON.parse(fs.readFileSync(path.join(root, 'release-files.json'), 'utf8')).slice().sort();
-const releaseDir = path.join(root, 'release');
+const releaseDir = path.join(root, 'release', packageJson.version);
 if (!packageJson.version || !(packageJson.version === manifest.version || packageJson.version.startsWith(manifest.version + "-"))) {
   throw new Error("package.json and manifest.json versions are incompatible");
 }

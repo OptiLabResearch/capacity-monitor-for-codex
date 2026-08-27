@@ -24,7 +24,7 @@ unknown schemas must fail closed and surface safe diagnostics.
 - `worker-example.js` is an optional user-operated Cloudflare/Brevo relay
   example and is not included in the extension package.
 - `scripts/preview.mjs` is a local synthetic UI preview. `scripts/package.mjs`
-  creates the deterministic release ZIP from `release-files.json`.
+  creates the deterministic ZIP in `release/<package-version>/` from `release-files.json`.
 
 ## Sources of truth
 
@@ -36,28 +36,34 @@ unknown schemas must fail closed and surface safe diagnostics.
   `RELEASE_CHECKLIST.md`
 - Chrome Web Store copy and disclosure: `STORE_LISTING.md`
 - Runtime behavior and permissions: `manifest.json` and the source code
+- Agent workflow measurement only: `docs/AGENT_EFFICIENCY.md`; do not read it for normal product tasks.
 
 ## Commands
 
 ```sh
-npm run check      # syntax-check extension and Worker JavaScript
-npm test           # deterministic core tests and static public-release QA
-npm run preview    # local synthetic UI preview at http://127.0.0.1:4173
-npm run package    # deterministic allowlisted ZIP and SHA-256
+npm run check          # project JavaScript syntax only
+npm test               # deterministic tests and static QA
+npm run verify         # aggregate default PR validation
+npm run verify:release # aggregate release gate and package hash repeat
+npm run preview        # local synthetic UI preview at http://127.0.0.1:4173
+npm run package        # package only
 ```
 
-Run the full release gate before a release. Packaging and preview are separate
-commands; packaging does not start the preview server.
+`npm run verify` is the default PR gate. Use the task matrix in `TESTING.md` to
+choose a narrower check while iterating. Use `npm run verify:release` before
+publishing; it repeats packaging and compares SHA-256. Packaging and preview
+are separate commands; packaging does not start the preview server.
 
 ## Project constraints
 
 - Keep quota history in `chrome.storage.local`; there is no developer telemetry
-  or backend service.
+  or backend service. Any agent-efficiency measurement stays opt-in, external,
+  redacted, and outside the extension runtime.
 - Keep ChatGPT access tokens in memory only. Never commit, print, or paste
   credentials, `.env` values, raw authenticated responses, or private relay
   data.
 - Keep MV3 permissions, host access, and CSP minimal. Optional alert delivery
   must remain explicitly configured by the user and HTTPS-only.
 - Preserve storage schema, alert deduplication, diagnostics redaction, and the
-  `release-files.json` package boundary unless the change explicitly requires
-  and tests those areas.
+  `release-files.json` package boundary. Generated ZIPs belong in the ignored,
+  version-scoped `release/<package-version>/` directory.

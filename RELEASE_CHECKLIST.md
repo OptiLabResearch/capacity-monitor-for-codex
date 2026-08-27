@@ -2,10 +2,8 @@
 
 ## Automated
 
-- [ ] `npm run check`
-- [ ] `npm test`
-- [ ] `npm run package` twice with identical SHA-256
-- [ ] ZIP entries exactly match `release-files.json`
+- [ ] `npm run verify:release` (syntax, tests, QA, packaging twice, identical SHA-256)
+- [ ] ZIP entries in `release/<package-version>/` exactly match `release-files.json` (checked by the release gate)
 - [ ] `.env` ignored and untracked
 - [ ] Working tree, staged diff, Git history, and ZIP scanned for credentials
 - [ ] GitHub Actions uses read-only contents permission

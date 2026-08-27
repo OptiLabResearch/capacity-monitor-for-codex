@@ -6,3 +6,4 @@ Thumbs.db
 secrets.*
 node_modules/
 release/
+.agent-metrics/
